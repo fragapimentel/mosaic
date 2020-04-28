@@ -3,11 +3,15 @@ import os, sys, cv2, math, re
 import numpy as np
 
 scales = 4
-step = 64 #Image patch size
+step = int(sys.argv[5]) #Image patch size
 tbSize = 32
 minError = 64
-maxOutSize = 8192
-gray = True # process the image in RGB or gray
+maxOutSize = 8196
+
+if sys.argv[4] == 'gray' or not sys.argv[4] == 'color':
+	gray = True # process the image in RGB or gray
+else:
+	gray = False
 
 def covert2gray(img):
 	tmp = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -33,7 +37,6 @@ def computeLayer(img, thumbs, k, result, distMap, factor):
 		for j in range(0, img.shape[1]-stepf-1, stepf):
 			patch = img[i:i+stepf,j:j+stepf,:]
 			patch = cv2.resize(patch, (tbSize, tbSize))
-			patch = cv2.medianBlur(patch, 3)
 			# TODO Convert dist to a matrix (more precise)
 			dist = 256
 			index = 0
@@ -82,11 +85,9 @@ for (dirpath, dirnames, filenames) in os.walk(sys.argv[2]):
 		tmp = cv2.imread(sys.argv[2]+file , cv2.IMREAD_COLOR)
 		if gray:
 			tmp = covert2gray(tmp)
-		#print(sys.argv[2]+file)
 		tmp = getCenterSquare(tmp)
-		tmp = cv2.medianBlur(tmp, 15)
+		tmp = cv2.medianBlur(tmp, 11)
 		tmp = cv2.resize(tmp, (tbSize, tbSize))
-		tmp = cv2.medianBlur(tmp, 3)
 		thumbs[k,:,:,:] = tmp
 		k += 1
 
@@ -104,5 +105,4 @@ for (dirpath, dirnames, filenames) in os.walk(sys.argv[2]):
 	for i in range(0, 3):
 		distMapRGB[:,:,i] = distMap[:,:]/255.0
 	cv2.imwrite(sys.argv[3], result*(invMap-distMapRGB)+img*distMapRGB)
-	cv2.imwrite('tmp.png', result)
 	print('Done')
